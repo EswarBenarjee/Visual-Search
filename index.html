@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Upload</title>
+  </head>
+  <body>
+    <h1>Upload an Image for Visual Search</h1>
+    <form
+      id="uploadForm"
+      onsubmit="onSubmit(event)"
+      enctype="multipart/form-data"
+    >
+      <label for="file">Choose an image:</label>
+      <input type="file" id="file" name="file" accept="image/*" required />
+      <button type="submit">Upload</button>
+    </form>
+    <div id="response">
+      <!-- The response from the server will be displayed here -->
+    </div>
+
+    <script>
+      function onSubmit(event) {
+        console.log("Form submission event triggered."); // Debug log
+        event.preventDefault(); // Prevent the default form submission behavior
+
+        var form = document.getElementById("uploadForm");
+        var formData = new FormData(form); // Create FormData object from the form
+
+        fetch("http://localhost:8000/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => {
+            console.log("Fetch response received."); // Debug log
+            return response.json();
+          })
+          .then((data) => {
+            // Convert response data to a JSON string
+            var jsonData = JSON.stringify(data, null, 2); // Pretty-print with indentation
+
+            // Create a Blob from the JSON string
+            var blob = new Blob([jsonData], { type: "application/json" });
+
+            // Create a download link and click it programmatically
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "response.json";
+            a.click();
+
+            console.log("Server response:", data); // Debug log
+            document.getElementById("response").innerHTML += `
+              <h2>Uploaded Image:</h2>
+              ${data.uploaded_image}
+              <h2>Similar Images:</h2>
+            `;
+            data.similar_images.forEach((imgUrl) => {
+              document.getElementById("response").innerHTML += `
+                ${imgUrl}
+              `;
+            });
+          })
+          .catch((error) => {
+            // Convert response data to a JSON string
+            var jsonData = JSON.stringify(error, null, 2); // Pretty-print with indentation
+
+            // Create a Blob from the JSON string
+            var blob = new Blob([jsonData], { type: "application/json" });
+
+            // Create a download link and click it programmatically
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "response.json";
+            a.click();
+
+            console.error("Error:", error); // Debug log
+            document.getElementById("response").innerHTML = `<p>Error: ${
+              error || "An error occurred"
+            }</p>`;
+          });
+      }
+    </script>
+  </body>
+</html>
